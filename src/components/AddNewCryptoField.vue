@@ -7,7 +7,7 @@
         >
         <div class="mt-1 relative rounded-md shadow-md">
           <input
-            v-model="ticker"
+            v-model.trim="ticker"
             @keydown.enter="addNewCrypto"
             type="text"
             name="wallet"
@@ -16,14 +16,18 @@
             placeholder="Например DOGE"
           />
         </div>
-        <div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+        <div v-if="ticker" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
           <span
+            v-for="suggest in suggestions"
+            :key="suggest.Id"
             class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
           >
-            BTC
+            {{ suggest.Symbol }}
           </span>
         </div>
-        <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+        <div v-if="errorTickerAlreadyExists" class="text-sm text-red-600">
+          {{ errorTickerAlreadyExists }}
+        </div>
       </div>
     </div>
     <button
@@ -51,32 +55,55 @@
 
 <script>
 import { getPrice } from "../api";
-import { nanoid } from "nanoid";
 
 export default {
   name: "AddNewCryptoField",
   data() {
     return {
       ticker: "",
+      errorTickerAlreadyExists: "",
+      suggestions: [],
     };
   },
+  computed: {
+    tickerToUpperCase() {
+      return this.ticker.toUpperCase();
+    },
+  },
+  watch: {
+    ticker() {
+      this.errorTickerAlreadyExists = "";
+      this.suggestions = Object.values(this.allCoins).filter((coin) =>
+        coin.Symbol.toUpperCase().includes(this.tickerToUpperCase)
+      );
+      if (this.suggestions.length > 4) this.suggestions.length = 4;
+    },
+  },
   emits: ["add-new-ticker"],
+  props: {
+    allCoins: Object,
+    tickers: Array,
+  },
   methods: {
     getPrice,
-    addNewCrypto() {
-      this.getPrice(this.ticker).then((tickerPrice) => {
-        if (tickerPrice.Response === "Error") {
-          console.log("error");
-        } else {
-          const newTicker = {
-            id: nanoid(),
-            name: this.ticker.toUpperCase(),
-            price: tickerPrice.USD,
-          };
+    async addNewCrypto() {
+      const f = this.tickers.find(
+        (t) => t.Symbol.toUpperCase() === this.tickerToUpperCase
+      );
+      if (!f) {
+        const tickerResponse = await this.getPrice(this.ticker);
+        const error = tickerResponse.Response === "Error";
+        if (!error) {
+          const found = this.allCoins[this.tickerToUpperCase];
+          found.price = tickerResponse.USD;
           this.ticker = "";
-          this.$emit("add-new-ticker", newTicker);
+          this.$emit("add-new-ticker", found);
+          return;
         }
-      });
+        this.errorTickerAlreadyExists = tickerResponse.Message;
+        return;
+      }
+      this.errorTickerAlreadyExists = "Такой тикер уже добавлен";
     },
   },
 };

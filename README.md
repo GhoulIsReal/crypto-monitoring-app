@@ -1,4 +1,4 @@
-# cryptocurrency-app
+# crypto-monitoring-app
 
 ## Project setup
 ```

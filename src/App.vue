@@ -2,15 +2,21 @@
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
     <div class="container">
       <div class="w-full my-4"></div>
-      <AddNewCryptoField @add-new-ticker="setNewTicker" />
+      <AddNewCryptoField
+        @add-new-ticker="setNewTicker"
+        :allCoins="allCoinsList"
+        :tickers="tickers"
+      />
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
-        <CryptoList
-          :tickers="tickers"
-          :handleTickerDelete="handleTickerDelete"
-          :handleSelect="handleSelect"
-          :selected="selected"
-        />
+        <CryptoList>
+          <CryptoListItem
+            v-for="ticker in tickers"
+            :key="ticker.Id"
+            :ticker="ticker"
+            @click="handleSelect(ticker.Id)"
+          />
+        </CryptoList>
         <hr class="w-full border-t border-gray-600 my-4" />
         <Graphic
           v-if="selected"
@@ -27,6 +33,7 @@
 <script>
 import AddNewCryptoField from "./components/AddNewCryptoField.vue";
 import CryptoList from "./components/CryptoList.vue";
+import CryptoListItem from "./components/CryptoListItem.vue";
 import Graphic from "./components/Graphic.vue";
 import { getAllCoins } from "./api";
 
@@ -35,13 +42,22 @@ export default {
   components: {
     AddNewCryptoField,
     CryptoList,
+    CryptoListItem,
     Graphic,
   },
   data() {
     return {
       tickers: [],
-      allCoinsList: [],
+      allCoinsList: {},
       selected: "",
+    };
+  },
+  provide() {
+    return {
+      tickers: this.tickers,
+      handleTickerDelete: this.handleTickerDelete,
+      handleSelect: this.handleSelect,
+      selected: this.selected,
     };
   },
   methods: {
@@ -49,13 +65,14 @@ export default {
       this.tickers.push(ticker);
     },
     handleTickerDelete(id) {
-      this.tickers = this.tickers.filter((ticker) => ticker.id !== id);
+      this.tickers = this.tickers.filter((ticker) => ticker.Id !== id);
     },
     handleSelect(id) {
       this.selected = id;
     },
-    getAllCoinsList() {
-      this.getAllCoins().then((res) => (this.allCoinsList = res.Data));
+    async getAllCoinsList() {
+      const coinsList = await this.getAllCoins();
+      this.allCoinsList = coinsList.Data;
     },
     getAllCoins,
   },

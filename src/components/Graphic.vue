@@ -60,10 +60,10 @@ export default {
   computed: {
     selectedTickerName() {
       const current = this.tickers.find(
-        (ticker) => ticker.id === this.selected
+        (ticker) => ticker.Id === this.selected
       );
       if (current) {
-        return current.name;
+        return current.FullName;
       } else {
         return this.$emit("refresh-selected-ticker");
       }
