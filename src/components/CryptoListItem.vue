@@ -36,9 +36,10 @@
 <script>
 export default {
   name: "Crypto",
-  inject: ["handleTickerDelete", "selected"],
   props: {
     ticker: Object,
+    selected: String,
+    handleTickerDelete: Function,
   },
 };
 </script>

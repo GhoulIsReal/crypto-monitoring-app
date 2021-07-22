@@ -8,7 +8,7 @@
         <div class="mt-1 relative rounded-md shadow-md">
           <input
             v-model.trim="ticker"
-            @keydown.enter="addNewCrypto"
+            @keydown.enter="addNewCrypto()"
             type="text"
             name="wallet"
             id="wallet"
@@ -16,13 +16,17 @@
             placeholder="Например DOGE"
           />
         </div>
-        <div v-if="ticker" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+        <div
+          v-if="ticker && suggestions.length"
+          class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
+        >
           <span
-            v-for="suggest in suggestions"
-            :key="suggest.Id"
+            v-for="suggestion in suggestions"
+            :key="suggestion.Id"
+            @click="addNewCrypto(suggestion)"
             class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
           >
-            {{ suggest.Symbol }}
+            {{ suggestion.Symbol }}
           </span>
         </div>
         <div v-if="errorTickerAlreadyExists" class="text-sm text-red-600">
@@ -31,11 +35,10 @@
       </div>
     </div>
     <button
-      @click="addNewCrypto"
+      @click="addNewCrypto()"
       type="button"
       class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
     >
-      <!-- Heroicon name: solid/mail -->
       <svg
         class="-ml-0.5 mr-2 h-6 w-6"
         xmlns="http://www.w3.org/2000/svg"
@@ -86,15 +89,19 @@ export default {
   },
   methods: {
     getPrice,
-    async addNewCrypto() {
-      const f = this.tickers.find(
-        (t) => t.Symbol.toUpperCase() === this.tickerToUpperCase
-      );
+    async addNewCrypto(suggestion) {
+      const f = this.tickers.find((t) => {
+        return (
+          t.Symbol.toUpperCase() === this.tickerToUpperCase || t === suggestion
+        );
+      });
       if (!f) {
-        const tickerResponse = await this.getPrice(this.ticker);
+        const tickerResponse = await this.getPrice(
+          suggestion?.Symbol ?? this.ticker
+        );
         const error = tickerResponse.Response === "Error";
         if (!error) {
-          const found = this.allCoins[this.tickerToUpperCase];
+          const found = suggestion ?? this.allCoins[this.tickerToUpperCase];
           found.price = tickerResponse.USD;
           this.ticker = "";
           this.$emit("add-new-ticker", found);

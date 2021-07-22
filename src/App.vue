@@ -14,6 +14,8 @@
             v-for="ticker in tickers"
             :key="ticker.Id"
             :ticker="ticker"
+            :selected="selected"
+            :handleTickerDelete="handleTickerDelete"
             @click="handleSelect(ticker.Id)"
           />
         </CryptoList>
@@ -52,17 +54,15 @@ export default {
       selected: "",
     };
   },
-  provide() {
-    return {
-      tickers: this.tickers,
-      handleTickerDelete: this.handleTickerDelete,
-      handleSelect: this.handleSelect,
-      selected: this.selected,
-    };
+  watch: {
+    tickers(data) {
+      localStorage.setItem("tickers", JSON.stringify(data));
+    },
   },
   methods: {
     setNewTicker(ticker) {
-      this.tickers.push(ticker);
+      const prev = this.tickers;
+      this.tickers = [...prev, ticker];
     },
     handleTickerDelete(id) {
       this.tickers = this.tickers.filter((ticker) => ticker.Id !== id);
@@ -74,9 +74,14 @@ export default {
       const coinsList = await this.getAllCoins();
       this.allCoinsList = coinsList.Data;
     },
+    getTickers() {
+      const data = JSON.parse(localStorage.getItem("tickers"));
+      if (data) this.tickers = data;
+    },
     getAllCoins,
   },
   mounted() {
+    this.getTickers();
     this.getAllCoinsList();
   },
 };
