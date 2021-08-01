@@ -91,9 +91,10 @@ export default {
     getPrice,
     async addNewCrypto(suggestion) {
       const f = this.tickers.find((t) => {
-        return (
-          t.Symbol.toUpperCase() === this.tickerToUpperCase || t === suggestion
-        );
+        const found = suggestion
+          ? t.Id === suggestion.Id
+          : t.Symbol.toUpperCase() === this.tickerToUpperCase;
+        return found;
       });
       if (!f) {
         const tickerResponse = await this.getPrice(

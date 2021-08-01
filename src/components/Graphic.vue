@@ -1,7 +1,7 @@
 <template>
   <section class="relative">
     <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-      {{ selectedTickerName }} - USD
+      {{ selectedTicker.FullName }} - USD
     </h3>
     <div class="flex items-end border-gray-600 border-b border-l h-64">
       <div
@@ -12,7 +12,7 @@
       ></div>
     </div>
     <button
-      @click="$emit('handle-select', '')"
+      @click="$emit('handle-select', {})"
       type="button"
       class="absolute top-0 right-0"
     >
@@ -47,8 +47,7 @@ import { getPrice } from "../api";
 export default {
   name: "Graphic",
   props: {
-    selected: String,
-    tickers: Array,
+    selectedTicker: Object,
   },
   emits: ["refresh-selected-ticker", "handle-select"],
   data() {
@@ -58,16 +57,6 @@ export default {
     };
   },
   computed: {
-    selectedTickerName() {
-      const current = this.tickers.find(
-        (ticker) => ticker.Id === this.selected
-      );
-      if (current) {
-        return current.FullName;
-      } else {
-        return this.$emit("refresh-selected-ticker");
-      }
-    },
     normalizedGraphic() {
       const max = Math.max(...this.graphic);
       const min = Math.min(...this.graphic);
@@ -77,7 +66,7 @@ export default {
     },
   },
   watch: {
-    selected() {
+    selectedTicker() {
       this.refreshTimer();
       this.updateGraphic();
     },
@@ -86,7 +75,7 @@ export default {
     getPrice,
     updateGraphic() {
       this.timer = setInterval(() => {
-        this.getPrice(this.selectedTickerName).then((value) =>
+        this.getPrice(this.selectedTicker.Symbol).then((value) =>
           this.graphic.push(value.USD)
         );
       }, 5000);

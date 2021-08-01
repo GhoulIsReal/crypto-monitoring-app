@@ -1,7 +1,7 @@
 <template>
   <div
     class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
-    :class="{ 'border-4': selected === ticker.Id }"
+    :class="{ 'border-4': selectedTicker === ticker }"
   >
     <div class="px-4 py-5 sm:p-6 text-center">
       <dt class="text-sm font-medium text-gray-500 truncate">
@@ -38,7 +38,7 @@ export default {
   name: "Crypto",
   props: {
     ticker: Object,
-    selected: String,
+    selectedTicker: Object,
     handleTickerDelete: Function,
   },
 };

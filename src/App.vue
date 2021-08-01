@@ -9,22 +9,28 @@
       />
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
+        <BaseInput v-model="filterInput" labelName="Найти" />
         <CryptoList>
           <CryptoListItem
-            v-for="ticker in tickers"
+            v-for="ticker in filteredTickersByPage"
             :key="ticker.Id"
             :ticker="ticker"
-            :selected="selected"
+            :selectedTicker="selectedTicker"
             :handleTickerDelete="handleTickerDelete"
-            @click="handleSelect(ticker.Id)"
+            @click="handleSelect(ticker)"
           />
         </CryptoList>
+        <BasePagination
+          :page="page"
+          :hasNextPage="hasNextPage"
+          @next-page="page++"
+          @prev-page="page--"
+        />
         <hr class="w-full border-t border-gray-600 my-4" />
         <Graphic
-          v-if="selected"
-          :selected="selected"
-          :tickers="tickers"
-          @refresh-selected-ticker="selected = ''"
+          v-if="selectedTicker?.Id"
+          :selectedTicker="selectedTicker"
+          @refresh-selected-ticker="selectedTicker = {}"
           @handle-select="handleSelect"
         />
       </template>
@@ -36,8 +42,11 @@
 import AddNewCryptoField from "./components/AddNewCryptoField.vue";
 import CryptoList from "./components/CryptoList.vue";
 import CryptoListItem from "./components/CryptoListItem.vue";
+import BaseInput from "./components/BaseInput.vue";
+import BasePagination from "./components/BasePagination.vue";
 import Graphic from "./components/Graphic.vue";
 import { getAllCoins } from "./api";
+import { getItemsPerPage } from "./helpers";
 
 export default {
   name: "App",
@@ -46,29 +55,62 @@ export default {
     CryptoList,
     CryptoListItem,
     Graphic,
+    BaseInput,
+    BasePagination,
   },
   data() {
     return {
-      tickers: [],
+      tickers: this.getTickers(),
+      filterInput: "",
       allCoinsList: {},
-      selected: "",
+      selectedTicker: {},
+      hasNextPage: false,
+      page: 1,
     };
   },
   watch: {
-    tickers(data) {
-      localStorage.setItem("tickers", JSON.stringify(data));
+    tickers: {
+      handler(data) {
+        if (data.length) {
+          localStorage.setItem("tickers", JSON.stringify(data));
+          return;
+        }
+        localStorage.removeItem("tickers");
+      },
+      deep: true,
+    },
+    filteredTickersByPage: {
+      handler() {
+        const end = 6 * this.page;
+        this.hasNextPage = this.filteredTickers.length > end;
+      },
+      deep: true,
+      immediate: true,
+    },
+    filterInput() {
+      this.page = 1;
+    },
+  },
+  computed: {
+    filteredTickers() {
+      return this.tickers.filter((t) =>
+        t.FullName.toLowerCase().includes(this.filterInput.toLowerCase())
+      );
+    },
+    filteredTickersByPage() {
+      const [start, end] = [...this.getItemsPerPage(this.page)];
+      return this.filteredTickers.slice(start, end);
     },
   },
   methods: {
     setNewTicker(ticker) {
-      const prev = this.tickers;
-      this.tickers = [...prev, ticker];
+      this.tickers.push(ticker);
     },
     handleTickerDelete(id) {
       this.tickers = this.tickers.filter((ticker) => ticker.Id !== id);
     },
-    handleSelect(id) {
-      this.selected = id;
+    handleSelect(ticker) {
+      this.selectedTicker = ticker;
     },
     async getAllCoinsList() {
       const coinsList = await this.getAllCoins();
@@ -76,12 +118,12 @@ export default {
     },
     getTickers() {
       const data = JSON.parse(localStorage.getItem("tickers"));
-      if (data) this.tickers = data;
+      return data ?? [];
     },
     getAllCoins,
+    getItemsPerPage,
   },
   mounted() {
-    this.getTickers();
     this.getAllCoinsList();
   },
 };
