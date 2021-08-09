@@ -21,7 +21,7 @@
 
 <script>
 export default {
-  name: "Pagination",
+  name: "BasePagination",
   props: {
     hasNextPage: Boolean,
     page: Number,

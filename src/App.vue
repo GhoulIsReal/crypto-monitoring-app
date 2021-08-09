@@ -81,20 +81,32 @@ export default {
     },
     filteredTickersByPage: {
       handler() {
-        const end = 6 * this.page;
+        const end = this.getItemsPerPage(this.page)[1];
         this.hasNextPage = this.filteredTickers.length > end;
       },
       deep: true,
       immediate: true,
     },
     filterInput() {
+      history.pushState(
+        null,
+        document.title,
+        `${location.pathname}?search=${this.filterInput}&page=${this.page}`
+      );
       this.page = 1;
+    },
+    page() {
+      history.pushState(
+        null,
+        document.title,
+        `${location.pathname}?search=${this.filterInput}&page=${this.page}`
+      );
     },
   },
   computed: {
     filteredTickers() {
       return this.tickers.filter((t) =>
-        t.FullName.toLowerCase().includes(this.filterInput.toLowerCase())
+        t.FullName.toLowerCase().includes(this.filterInput?.toLowerCase())
       );
     },
     filteredTickersByPage() {
@@ -120,11 +132,17 @@ export default {
       const data = JSON.parse(localStorage.getItem("tickers"));
       return data ?? [];
     },
+    setInitialPageFilter() {
+      let params = new URLSearchParams(location.search);
+      this.page = Number(params.get("page"));
+      this.filterInput = params.get("search");
+    },
     getAllCoins,
     getItemsPerPage,
   },
   mounted() {
     this.getAllCoinsList();
+    this.setInitialPageFilter();
   },
 };
 </script>
